@@ -16,4 +16,4 @@ class Solution:
                 right = right - 1
         return ma
 
-print(Solution().maxArea([2,3,4,1,5])+"test")
+print(Solution().maxArea([2,3,4,1,5]))

@@ -32,4 +32,3 @@ float()
 #Returns String
 a = input("input")
 ```
-

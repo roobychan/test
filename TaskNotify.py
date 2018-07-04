@@ -1,7 +1,8 @@
 import re
+# import jsonpickle
 
 
-USStatus = {1: "Under Analysis/Devlopment", 2: "Waiting for Documentation", 3: "Waiting for testing", 4: "Completed"}
+USStatus = {1: "Under Analysis/Development", 2: "Waiting for Documentation", 3: "Waiting for testing", 4: "Completed"}
 
 class Task:
     taskID = ""
@@ -44,6 +45,9 @@ class UserStory:
             if match:
                 self.CRM = match.group(0)
         self.owner = dline[10][:-1]
+        self.status = USStatus[4]
+        self.tasks = []
+        self.notifier = ""
         self.addTask(dline)
 
     def updateStatus(self):
@@ -55,14 +59,13 @@ class UserStory:
                         self.notifier = c[1]
                         break
                 break
-            elif re.search(r"Fucntional test", t.taskType) and t.status != "Completed":
+            elif re.search(r"Functional test", t.taskType) and t.status != "Completed":
                 self.status = USStatus[3]
                 for c in UserStory.contactors:
                     if c[0] == t.owner:
                         self.notifier = c[1]
                         break
-                break
-        if self.status != USStatus[1]:
+        if self.status == USStatus[4]:
             for t in self.tasks:
                 if t.status != 'Completed':
                     self.status = USStatus[2]
@@ -74,9 +77,8 @@ class UserStory:
     def addTask(self, dline=[]):
         self.tasks.append(Task(dline))
 
-        
-    
-
+    def toCSV(self):
+        return self.userStory+','+self.description+','+self.CRM+','+self.status+','+self.notifier+'\r'
 
 def main():
     readData = []
@@ -84,17 +86,18 @@ def main():
     with open('Contactor.csv') as f:
         for l in f:
             clist = l.split(',')
+            clist[1] = re.search(r'\S+',clist[1]).group(0)
             UserStory.contactors.append(clist) 
-    with open('export.csv') as f:
+    with open('export1.csv',encoding = 'utf-8') as f:
         for l in f:
             readData.append(l)
     readData.pop(0)
-    readData.replace("\"","")
     readData.sort()
     for r in readData:
-        slist = r.split(",")
+        slist = r.replace('"','').split(",")
+        # print(slist)
         match = re.search(r"(?<=US).+?(?=:)", slist[2])
-        if match:
+        if match and slist[4] != "":
             new = True
             for u in UStories:
                 if match.group(0) == u.userStory:
@@ -109,7 +112,13 @@ def main():
     #     print(u.userStory, u.description, u.CRM,u.status,u.owner, u.notifier)
     #     for t in u.tasks:
     #         print(t.taskID,t.taskType,t.status)
-
+    # t = jsonpickle.encode(UStories)
+    # print(t)
+    with open('result.csv','w',encoding = 'utf-8') as f:
+        # f.write(t)
+        for u in UStories:
+            if u.status != 'Completed':
+                f.write(u.toCSV()) 
 
 main()
             

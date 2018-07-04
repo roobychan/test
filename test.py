@@ -1,19 +1,24 @@
-class Solution:
-    def maxArea(self, height):
-        """
-        :type height: List[int]
-        :rtype: int
-        """
-        ma = 0
-        left = 0
-        right = len(height) -1
-        while left < right:
-            ca = min([height[left],height[right]]) * (right - left)
-            ma = max([ma,ca])
-            if height[left] <= height[right]:
-                left = left + 1
-            else:
-                right = right - 1
-        return ma
+from openpyxl import Workbook
+from openpyxl.compat import range
+from openpyxl.utils import get_column_letter
 
-print(Solution().maxArea([2,3,4,1,5]))
+wb = Workbook()
+
+dest_filename = 'empty_book.xlsx'
+
+ws1 = wb.active
+ws1.title = "range names"
+
+for row in range(1, 40):
+    ws1.append(range(600))
+
+ws2 = wb.create_sheet(title="Pi")
+
+ws2['F5'] = 3.14
+
+ws3 = wb.create_sheet(title="Data")
+for row in range(10, 20):
+    for col in range(27, 54):
+        _ = ws3.cell(column=col, row=row, value="{0}".format(get_column_letter(col)))
+print(ws3['AA10'].value)
+wb.save(filename=dest_filename)

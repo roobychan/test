@@ -3,3 +3,6 @@ t.py
 result.*
 .vscode/settings.json
 regex.txt
+test.db
+emaildb.sqlite
+mbox.txt

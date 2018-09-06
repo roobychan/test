@@ -3,4 +3,10 @@ t.py
 result.*
 .vscode/settings.json
 regex.txt
+<<<<<<< HEAD
 empty_book.xlsx
+=======
+test.db
+emaildb.sqlite
+mbox.txt
+>>>>>>> aadc694610fa9e85ee887a8c7d3cfe83836abe5e

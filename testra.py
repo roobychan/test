@@ -8,12 +8,12 @@ def updateUS(cur, us):
     us.Name = us.Name.replace("'", "''")
     ou = getOwner(us.Owner)
     getUSStatus(us)
-    query = """INSERT OR IGNORE INTO UserStory(USID,DESP,CRM,OWNER,STATUS)
-        VALUES('{0}','{1}',{2},'{3}','{4}')""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState)
+    query = """INSERT OR IGNORE INTO UserStory(USID,DESP,CRM,OWNER,STATUS,ITERA)
+        VALUES('{0}','{1}',{2},'{3}','{4}','{5}')""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState, getIteration())
     # print(query)
     cur.execute(query)
     query = """UPDATE UserStory SET DESP='{1}', CRM={2}, OWNER='{3}', STATUS='{4}'
-        WHERE USID='{0}'""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState)
+        WHERE USID='{0}'""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState, getIteration())
     # print(query)
     cur.execute(query)
 
@@ -35,8 +35,16 @@ def updateTask(cur,us,task):
     cur.execute(query)
 
 
+def getIteration(us):
+    if us.Iteration:
+        return us.Iteration
+    else:
+        return ''
+
+
 def getOwner(own):
     if own:
+        own.UserName = own.UserName.lower()
         for usr in user:
             if own.UserName == usr[1]:
                 return usr[0]
@@ -47,7 +55,10 @@ def getOwner(own):
 
 def initUser(cur):
     cur.execute('SELECT * FROM OWNER')
-    return cur.fetchall()
+    rt = cur.fetchall()
+    for a,b in rt:
+        b = b.lower()
+    return rt
 
 
 def initStatus(cur):
@@ -103,9 +114,3 @@ for us in response:
     # break
 
 conn.commit()
-# workspaces = rally.getWorkspaces()
-# for wksp in workspaces:
-#     print("%s %s" % (wksp.oid, wksp.Name))
-#     projects = rally.getProjects(workspace=wksp.Name)
-#     for proj in projects:
-#         print("    %12.12s  %s" % (proj.oid, proj.Name))

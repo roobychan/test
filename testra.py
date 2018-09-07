@@ -7,22 +7,22 @@ def updateUS(cur, us):
         us.CRM = 0
     us.Name = us.Name.replace("'", "''")
     ou = getOwner(us.Owner)
-    getUSStatus(us)
-    query = """INSERT OR IGNORE INTO UserStory(USID,DESP,CRM,OWNER,STATUS,ITERA)
-        VALUES('{0}','{1}',{2},'{3}','{4}','{5}')""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState, getIteration())
+    towner = ''
+    towner = getUSStatus(us, towner)
+    query = """INSERT OR IGNORE INTO UserStory(USID,DESP,CRM,OWNER,STATUS,ITERA,TOWNER)
+        VALUES('{0}','{1}',{2},'{3}','{4}','{5}','{6}')""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState, getIteration(us), towner)
     # print(query)
     cur.execute(query)
-    query = """UPDATE UserStory SET DESP='{1}', CRM={2}, OWNER='{3}', STATUS='{4}'
-        WHERE USID='{0}'""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState, getIteration())
-    # print(query)
+    query = """UPDATE UserStory SET DESP='{1}', CRM={2}, OWNER='{3}', STATUS='{4}', ITERA='{5}', TOWNER='{6}'
+        WHERE USID='{0}'""".format(us.FormattedID, us.Name, us.CRM, ou, us.ScheduleState, getIteration(us), towner)
     cur.execute(query)
 
     for task in us.Tasks:
         updateTask(cur, us, task)
 
 
-def updateTask(cur,us,task):
-    task.Name = task.Name.replace("'","''")
+def updateTask(cur, us, task):
+    task.Name = task.Name.replace("'", "''")
     ou = getOwner(task.Owner)
     getTaskStatus(task)
     query = """INSERT OR IGNORE INTO TASK(TASKID,DESP,USID,OWNER,STATUS)
@@ -37,7 +37,8 @@ def updateTask(cur,us,task):
 
 def getIteration(us):
     if us.Iteration:
-        return us.Iteration
+        # print(us.Iteration.details())
+        return us.Iteration.Name
     else:
         return ''
 
@@ -56,8 +57,6 @@ def getOwner(own):
 def initUser(cur):
     cur.execute('SELECT * FROM OWNER')
     rt = cur.fetchall()
-    for a,b in rt:
-        b = b.lower()
     return rt
 
 
@@ -66,13 +65,17 @@ def initStatus(cur):
     return cur.fetchall()
 
 
-def getUSStatus(us):
+def getUSStatus(us, town):
+    for t1 in us.Tasks:
+        if t1.Name == 'functional test' or t1.Name.lower() == 'functional testing' or t1.Name.lower() == 'function test':
+            town = getOwner(t1.Owner)
+            print(town)
     for st in status:
         if st[1] == us.ScheduleState and st[0][0] == 'U':
             us.ScheduleState = st[0]
-            return
+            return town
     for t1 in us.Tasks:
-        if t1.Name == 'Functional test' and t1.State != 'Completed':
+        if (t1.Name == 'functional test' or t1.Name.lower() == 'functional testing' or t1.Name.lower() == 'function test') and t1.State != 'Completed':
             for t2 in us.Tasks:
                 if t2.Name == 'KT to tester for code changes' and t2.State == 'Completed':
                     us.ScheduleState = 'U5'
@@ -83,6 +86,7 @@ def getUSStatus(us):
     if us.ScheduleState[0] != 'U':
         us.ScheduleState = 'U6'
     # print(us.ScheduleState)
+    return town
 
 
 def getTaskStatus(task):
@@ -98,14 +102,16 @@ user = initUser(c)
 status = initStatus(c)
 
 rally = Rally('rally1.rallydev.com',
-    apikey='_b0ZewDOZThOpwqO4hbOi278k1JpeAE0tueYqgmzxIeY',
-    workspace='ES (Employer Services)', project='GV - XSS - APAC')
+              apikey='_b0ZewDOZThOpwqO4hbOi278k1JpeAE0tueYqgmzxIeY',
+              workspace='ES (Employer Services)', project='GV - XSS - APAC')
 
-response = rally.get('UserStory', limit=999)
+response = rally.get('UserStory', limit=100)
 i = 0
 for us in response:
     i = i + 1
-    print(i,us.FormattedID)
+    print(i, us.FormattedID)
+    if us.FormattedID != 'US923012':
+        continue
     updateUS(c, us)
     # print(us.details())
     # for task in us.Tasks:
